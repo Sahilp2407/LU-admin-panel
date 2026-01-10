@@ -1,12 +1,10 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
-import { useState, useEffect } from 'react';
 import { auth } from '../firebase/config';
 
 const Layout = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [logoError, setLogoError] = useState(true); // Start with true to show fallback immediately
 
   const handleLogout = async () => {
     try {
