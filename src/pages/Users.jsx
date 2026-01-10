@@ -34,8 +34,20 @@ const Users = () => {
         setError(null);
       },
       (error) => {
-        console.error('Error fetching users:', error);
-        setError(error.message || 'Failed to fetch users. Check Firestore security rules and browser console.');
+        console.error('❌ Error fetching users:', error);
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        
+        let errorMessage = 'Failed to fetch users. ';
+        if (error.code === 'permission-denied') {
+          errorMessage += 'Permission denied. Please check Firestore security rules allow admin users to read data.';
+        } else if (error.code === 'unavailable') {
+          errorMessage += 'Firestore is unavailable. Please check your internet connection.';
+        } else {
+          errorMessage += `Error: ${error.message}. Check browser console (F12) for details.`;
+        }
+        
+        setError(errorMessage);
         setLoading(false);
       }
     );
@@ -147,30 +159,32 @@ const Users = () => {
         </div>
       </div>
 
-      <div className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-100">
-        <div className="overflow-x-auto">
+      <div className="bg-white shadow-2xl rounded-2xl overflow-hidden border border-gray-200">
+        <div className="overflow-x-auto max-h-[calc(100vh-300px)]">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
+            <thead className="bg-gradient-to-r from-gray-50 via-gray-50 to-gray-100 sticky top-0 z-10 shadow-sm">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                  #
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider sticky left-0 bg-gradient-to-r from-gray-50 via-gray-50 to-gray-100 z-20">
+                  <div className="flex items-center gap-2">
+                    <span>#</span>
+                  </div>
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-[180px]">
                   Name
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-[220px]">
                   Email
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-[150px]">
                   Profession
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-[100px]">
                   Rating
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-[120px]">
                   Total Points
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-[140px]">
                   Actions
                 </th>
               </tr>
@@ -178,12 +192,15 @@ const Users = () => {
             <tbody className="bg-white divide-y divide-gray-100">
               {filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-6 py-12 text-center">
+                  <td colSpan="7" className="px-6 py-16 text-center">
                     <div className="flex flex-col items-center">
-                      <svg className="h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                      </svg>
-                      <p className="text-gray-500 font-medium">{searchQuery ? 'No users found matching your search' : 'No users found'}</p>
+                      <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                        <svg className="h-10 w-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                        </svg>
+                      </div>
+                      <p className="text-gray-600 font-semibold text-lg mb-1">{searchQuery ? 'No users found' : 'No users available'}</p>
+                      <p className="text-gray-400 text-sm">{searchQuery ? 'Try a different search term' : 'Users will appear here once they register'}</p>
                     </div>
                   </td>
                 </tr>
@@ -191,54 +208,103 @@ const Users = () => {
                 filteredUsers.map((user, index) => {
                   const rating = getRating(user);
                   const points = getTotalPoints(user);
+                  const hasName = user.name && user.name.trim() !== '';
+                  const hasEmail = user.email && user.email.trim() !== '';
+                  
                   return (
-                    <tr key={user.id} className="hover:bg-blue-50 transition-colors duration-150">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-600 font-semibold text-sm">
+                    <tr key={user.id} className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200 border-b border-gray-100">
+                      <td className="px-6 py-5 whitespace-nowrap sticky left-0 bg-white z-10 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 text-gray-700 font-bold text-sm shadow-sm">
                           {index + 1}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-semibold text-gray-900">
-                          {user.name || <span className="text-gray-400 italic">N/A</span>}
+                      <td className="px-6 py-5">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center mr-3 shadow-md">
+                            <span className="text-white font-bold text-sm">
+                              {hasName ? user.name.charAt(0).toUpperCase() : '?'}
+                            </span>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-bold text-gray-900 truncate">
+                              {hasName ? user.name : <span className="text-gray-400 font-normal italic">Not provided</span>}
+                            </div>
+                          </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-600">
-                          {user.email || <span className="text-gray-400 italic">N/A</span>}
+                      <td className="px-6 py-5">
+                        <div className="text-sm text-gray-700 truncate max-w-[220px]" title={user.email || 'No email'}>
+                          {hasEmail ? (
+                            <div className="flex items-center gap-2">
+                              <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                              </svg>
+                              <span className="truncate">{user.email}</span>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400 italic">Not provided</span>
+                          )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-5 whitespace-nowrap">
                         {user.profile?.profession ? (
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getProfessionBadgeColor(user.profile.profession)}`}>
+                          <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm ${getProfessionBadgeColor(user.profile.profession)}`}>
                             {user.profile.profession}
                           </span>
                         ) : (
-                          <span className="text-gray-400 italic text-sm">N/A</span>
+                          <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+                            Not specified
+                          </span>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-5 whitespace-nowrap">
                         {rating ? (
-                          <div className="flex items-center gap-1">
-                            <span className="text-yellow-500">★</span>
-                            <span className="text-sm font-medium text-gray-700">{rating}/5</span>
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <span key={star} className={`text-lg ${star <= rating ? 'text-yellow-400' : 'text-gray-300'}`}>
+                                  ★
+                                </span>
+                              ))}
+                            </div>
+                            <span className="text-sm font-semibold text-gray-700 ml-1">{rating}/5</span>
                           </div>
                         ) : (
-                          <span className="text-gray-400 italic text-sm">N/A</span>
+                          <span className="text-gray-400 text-sm italic">No rating</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <span className={`text-sm font-semibold ${points > 0 ? 'text-green-600' : points < 0 ? 'text-red-600' : 'text-gray-500'}`}>
-                            {points}
-                          </span>
+                      <td className="px-6 py-5 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          {points > 0 ? (
+                            <>
+                              <svg className="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                              </svg>
+                              <span className="text-sm font-bold text-green-600">{points}</span>
+                            </>
+                          ) : points < 0 ? (
+                            <>
+                              <svg className="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                              </svg>
+                              <span className="text-sm font-bold text-red-600">{points}</span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-sm font-semibold text-gray-400">{points}</span>
+                            </>
+                          )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <td className="px-6 py-5 whitespace-nowrap">
                         <button
                           onClick={() => handleViewDetails(user.id)}
-                          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors shadow-sm hover:shadow-md"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all shadow-md hover:shadow-lg transform hover:scale-105"
                         >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
                           View Details
                         </button>
                       </td>

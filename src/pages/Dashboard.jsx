@@ -38,11 +38,21 @@ const Dashboard = () => {
     const fetchStats = async () => {
       try {
         setError(null);
+        console.log('Starting to fetch data from Firestore...');
+        console.log('Firestore db:', db);
+        
         const usersRef = collection(db, 'users');
         const q = query(usersRef);
+        console.log('Query created, fetching documents...');
+        
         const querySnapshot = await getDocs(q);
 
-        console.log('Total documents fetched:', querySnapshot.size);
+        console.log('✅ Total documents fetched:', querySnapshot.size);
+        
+        if (querySnapshot.empty) {
+          console.warn('⚠️ No documents found in users collection');
+          setError('No users found in Firestore. Please check if data exists.');
+        }
 
         let totalUsers = 0;
         let freshers = 0;
@@ -102,8 +112,20 @@ const Dashboard = () => {
           roleSwitchCount,
         });
       } catch (error) {
-        console.error('Error fetching stats:', error);
-        setError(error.message || 'Failed to fetch data. Check Firestore security rules and browser console.');
+        console.error('❌ Error fetching stats:', error);
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        
+        let errorMessage = 'Failed to fetch data. ';
+        if (error.code === 'permission-denied') {
+          errorMessage += 'Permission denied. Please check Firestore security rules allow admin users to read data.';
+        } else if (error.code === 'unavailable') {
+          errorMessage += 'Firestore is unavailable. Please check your internet connection.';
+        } else {
+          errorMessage += `Error: ${error.message}. Check browser console (F12) for details.`;
+        }
+        
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
