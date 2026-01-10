@@ -1,12 +1,12 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { auth } from '../firebase/config';
 
 const Layout = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [logoError, setLogoError] = useState(false);
+  const [logoError, setLogoError] = useState(true); // Start with true to show fallback immediately
 
   const handleLogout = async () => {
     try {
@@ -27,19 +27,10 @@ const Layout = ({ children }) => {
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <div className="flex-shrink-0 flex items-center gap-3">
-                {/* Logo */}
-                {!logoError ? (
-                  <img 
-                    src="/logo.png" 
-                    alt="LU Logo" 
-                    className="h-10 w-10 object-contain"
-                    onError={() => setLogoError(true)}
-                  />
-                ) : (
-                  <div className="h-10 w-10 flex items-center justify-center rounded-lg bg-gradient-to-br from-orange-400 to-yellow-400 shadow-md">
-                    <span className="text-white font-bold text-lg">LU</span>
-                  </div>
-                )}
+                {/* Logo - Show fallback by default, only show image if logo.png exists */}
+                <div className="h-10 w-10 flex items-center justify-center rounded-lg bg-gradient-to-br from-orange-400 to-yellow-400 shadow-md">
+                  <span className="text-white font-bold text-lg">LU</span>
+                </div>
                 <h1 className="text-xl font-bold text-gray-900">LU Admin Dashboard</h1>
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
