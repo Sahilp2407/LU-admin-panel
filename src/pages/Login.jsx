@@ -17,10 +17,16 @@ const Login = () => {
     setLoading(true);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      console.log('Attempting to sign in with:', email);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      console.log('✅ Login successful:', userCredential.user.uid);
       // Navigation will be handled by ProtectedRoute after auth state changes
       navigate('/dashboard');
     } catch (err) {
+      console.error('❌ Login error:', err);
+      console.error('Error code:', err.code);
+      console.error('Error message:', err.message);
+      
       let errorMessage = 'Failed to sign in';
       
       if (err.code === 'auth/user-not-found') {
@@ -28,13 +34,19 @@ const Login = () => {
       } else if (err.code === 'auth/wrong-password') {
         errorMessage = 'Incorrect password. Please check your password.';
       } else if (err.code === 'auth/invalid-email') {
-        errorMessage = 'Invalid email address.';
+        errorMessage = 'Invalid email address format.';
       } else if (err.code === 'auth/invalid-credential') {
-        errorMessage = 'Invalid email or password.';
+        errorMessage = 'Invalid email or password. The email exists but password is incorrect. Please reset password in Firebase Console → Authentication → Users, or check your password.';
       } else if (err.code === 'auth/operation-not-allowed') {
-        errorMessage = 'Email/Password authentication is not enabled. Please enable it in Firebase Console.';
+        errorMessage = 'Email/Password authentication is not enabled. Please enable it in Firebase Console → Authentication → Sign-in method.';
+      } else if (err.code === 'auth/too-many-requests') {
+        errorMessage = 'Too many failed login attempts. Please try again later.';
+      } else if (err.code === 'auth/network-request-failed') {
+        errorMessage = 'Network error. Please check your internet connection.';
+      } else if (err.message && err.message.includes('API key')) {
+        errorMessage = 'Firebase API key error. Please check Firebase configuration.';
       } else {
-        errorMessage = err.message || 'Failed to sign in';
+        errorMessage = `Login failed: ${err.message || err.code || 'Unknown error'}. Check browser console (F12) for details.`;
       }
       
       setError(errorMessage);
