@@ -68,6 +68,15 @@ const Users = () => {
     return user.stats?.totalPoints || 0;
   };
 
+  const getQuestionsCompleted = (user) => {
+    const stats = user.stats || {};
+    const totalCorrect = stats.totalCorrect || 0;
+    const totalIncorrect = stats.totalIncorrect || 0;
+    const totalQuestions = totalCorrect + totalIncorrect;
+    // Cap at 115 to exclude survey questions (only count quiz/course questions)
+    return Math.min(totalQuestions, 115);
+  };
+
   const getProfessionBadgeColor = (profession) => {
     if (!profession || profession === 'N/A') return 'bg-gray-100 text-gray-700';
     const prof = profession.toLowerCase();
@@ -185,6 +194,9 @@ const Users = () => {
                   Total Points
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-[140px]">
+                  Questions Completed
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-[140px]">
                   Actions
                 </th>
               </tr>
@@ -192,7 +204,7 @@ const Users = () => {
             <tbody className="bg-white divide-y divide-gray-100">
               {filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-6 py-16 text-center">
+                  <td colSpan="8" className="px-6 py-16 text-center">
                     <div className="flex flex-col items-center">
                       <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                         <svg className="h-10 w-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -208,6 +220,7 @@ const Users = () => {
                 filteredUsers.map((user, index) => {
                   const rating = getRating(user);
                   const points = getTotalPoints(user);
+                  const questionsCompleted = getQuestionsCompleted(user);
                   const hasName = user.name && user.name.trim() !== '';
                   const hasEmail = user.email && user.email.trim() !== '';
                   
@@ -293,6 +306,20 @@ const Users = () => {
                             <>
                               <span className="text-sm font-semibold text-gray-400">{points}</span>
                             </>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-5 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          {questionsCompleted > 0 ? (
+                            <>
+                              <svg className="h-5 w-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                              <span className="text-sm font-bold text-blue-600">{questionsCompleted}</span>
+                            </>
+                          ) : (
+                            <span className="text-sm font-semibold text-gray-400">0</span>
                           )}
                         </div>
                       </td>
